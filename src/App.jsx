@@ -1,35 +1,54 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import React, { useState, useEffect, useRef } from 'react';
+import Header from './components/Header/Header';
+import LocationDetails from './components/LocationDetails/LocationDetails';
+import DataTable from './components/DataTable/DataTable';
+import './App.css';
 
-function App() {
-  const [count, setCount] = useState(0)
+const App = () => {
+  const [data, setData] = useState(Array(30).fill({}));
+  const [tableHeight, setTableHeight] = useState('600px');
+  const tableContainerRef = useRef(null);
+
+  useEffect(() => {
+    const calculateHeight = () => {
+      if (tableContainerRef.current) {
+        const topOffset = tableContainerRef.current.offsetTop;
+        const viewportHeight = window.innerHeight;
+        const remainingHeight = viewportHeight - topOffset - 40; // 40px for padding/margin
+        setTableHeight(`${remainingHeight}px`);
+      }
+    };
+
+    calculateHeight();
+    window.addEventListener('resize', calculateHeight);
+
+    return () => {
+      window.removeEventListener('resize', calculateHeight);
+    };
+  }, [data]);
+
+  const handleDataChange = (index, newRowData) => {
+    const newData = [...data];
+    newData[index] = newRowData;
+    setData(newData);
+  };
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
-}
+    <div className="app-container">
+      <Header />
+      <LocationDetails />
 
-export default App
+      <div className="title-style">Personal Entry</div>
+
+      <div
+        ref={tableContainerRef}
+        className="data-table-container"
+        style={{ maxHeight: tableHeight }}
+      >
+        <DataTable data={data} onDataChange={handleDataChange} />
+      </div>
+    </div>
+  );
+};
+
+export default App;
