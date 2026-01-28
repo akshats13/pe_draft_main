@@ -3,12 +3,12 @@ import './DataTable.css';
 
 const columns = [
   { title: 'Line No', type: 'text', hint: '' },
-  { title: 'Building Number', type: 'text', hint: 'Only alphabets, digits and @#&A.()- are allowed' },
-  { title: 'Census House Number', type: 'number', hint: 'Only numbers are allowed' },
-  { title: 'Floor Material', type: 'text', hint: 'Only numbers are allowed' },
-  { title: 'Wall Material', type: 'text', hint: 'Only numbers are allowed' },
-  { title: 'Roof Material', type: 'text', hint: 'Only numbers are allowed' },
-  { title: 'Use of Census house', type: 'text', hint: 'Only numbers are allowed' },
+  { title: 'Column 2', type: 'text', hint: 'Only alphabets, digits and @#&A.()- are allowed' },
+  { title: 'Column 3', type: 'number', hint: 'Only numbers are allowed' },
+  { title: 'Column 4', type: 'text', hint: 'Only numbers are allowed' },
+  { title: 'Column 5', type: 'text', hint: 'Only numbers are allowed' },
+  { title: 'Column 6', type: 'text', hint: 'Only numbers are allowed' },
+  { title: 'Column 7', type: 'text', hint: 'Only numbers are allowed' },
   { title: 'Column 8', type: 'text', hint: '' },
   { title: 'Column 9', type: 'text', hint: '' },
   { title: 'Column 10', type: 'text', hint: '' },
