@@ -1,46 +1,262 @@
-.data-table-container {
-  overflow: auto; /* Enables both vertical and horizontal scrolling */
-  border: 1px solid #ddd;
-  border-radius: 8px;
-}
+.datatable-container {
+    background-color: #f0f2f5;
+    border-radius: 8px;
+    padding: 1rem;
+    transition: all 0.3s ease-in-out;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+  
+  .datatable-container.fullscreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 1rem;
+    bottom: 1rem;
+    border-radius: 0;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .toolbar {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding: 0.5rem;
+    background-color: #fff;
+    border-radius: 6px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  }
+  
+  .toolbar button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s;
+    color: #555;
+    font-size: 1.2rem;
+  }
+  
+  .toolbar button:hover {
+    background-color: #e9ecef;
+  }
+  
+  .toolbar button.danger {
+    color: #e74c3c;
+  }
+  
+  .toolbar button.danger:hover {
+    background-color: #fbeeed;
+  }
+  
+  .autosave-toggle {
+    display: flex;
+    align-items: center;
+    margin: 0 auto;
+  }
+  
+  .autosave-label {
+    margin-left: 10px;
+    font-weight: 500;
+    color: #333;
+  }
+  
+  /* The switch - the box around the slider */
+  .switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 28px;
+  }
+  
+  /* Hide default HTML checkbox */
+  .switch input { 
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+  
+  /* The slider */
+  .slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+  }
+  
+  .slider:before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+  }
+  
+  input:checked + .slider {
+    background-color: #28a745;
+  }
+  
+  input:focus + .slider {
+    box-shadow: 0 0 1px #28a745;
+  }
+  
+  input:checked + .slider:before {
+    transform: translateX(22px);
+  }
+  
+  /* Rounded sliders */
+  .slider.round {
+    border-radius: 34px;
+  }
+  
+  .slider.round:before {
+    border-radius: 50%;
+  }
+  
+  .table-wrapper {
+    overflow-x: auto;
+    max-width: 100%;
+    background-color: #fff;
+    border-radius: 8px;
+  }
+  
+  .fullscreen .table-wrapper {
+    flex-grow: 1;
+    overflow: auto;
+  }
+  
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  th, td {
+    padding: 20px 15px;
+    text-align: left;
+    min-width: 195px;
+    white-space: nowrap;
+    vertical-align: top;
+    border: none; /* Reset all borders */
+  }
 
-.data-table {
-  border-collapse: collapse;
-  min-width: 100%; /* Allows table to expand beyond container width */
-}
+  td {
+    border-bottom: 1px solid #dee2e6; /* Add borders back only to data cells */
+    background-color: #fff; /* Fix for border collapse issue */
+  }
+  
+  th {
+    background-color: #fff;
+    font-weight: 600;
+    color: #495057;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
 
-.data-table th,
-.data-table td {
-  border: 1px solid #ddd;
-  padding: 12px 15px;
-  text-align: left;
-  white-space: nowrap; /* Prevents text from wrapping, forcing horizontal scroll */
-}
+  thead tr:nth-child(1) th:not(:last-child) {
+    border-right: 1px solid #dee2e6; /* Vertical borders for main question headers */
+  }
 
-.data-table th {
-  background-color: #f8f9fa;
-  position: sticky;
-  top: 0;
-  z-index: 1; /* Keeps header on top of scrolled content */
-}
+  thead tr:nth-child(1) th {
+    text-align: center;
+  }
 
-.input-container {
-  display: flex;
-  flex-direction: column;
-}
+  thead tr:nth-child(2) th {
+    border-bottom: 1px solid #dee2e6; /* Single border below the entire header */
+    text-align: center;
+    top: 49px; /* Height of the first header row */
+    border-left: 1px solid #dee2e6;
+  }
+  
+  td > div {
+    margin-bottom: 10px;
+  }
+  
+  td > div:last-child {
+    margin-bottom: 0;
+  }
+  
+  tbody tr:hover td {
+    background-color: #f1f3f5;
+  }
 
-.input-container input {
-  border: 1px solid #ccc;
-  padding: 8px;
-  border-radius: 4px;
-}
-
-.hint {
-  font-size: 0.8em;
-  color: #777;
-  margin-top: 4px;
-}
-
-.line-no {
-  font-weight: bold;
-}
+  .main-question-border {
+    border-right: 1px solid #dee2e6;
+  }
+  
+  input, select {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+    box-sizing: border-box; /* Ensures padding doesn't affect final width */
+  }
+  
+  input:focus, select:focus {
+    outline: 0;
+  }
+  
+  .field-hidden {
+    color: #adb5bd;
+    font-style: italic;
+  }
+  
+  .footer-toolbar {
+    display: flex;
+    justify-content: center;
+    margin-top: 1rem;
+  }
+  
+  .submit-btn {
+    background-color: #28a745;
+    border: none;
+    color: white;
+    padding: 14px 30px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    box-sharkdow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .submit-btn:hover {
+    background-color: #218838;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+  
+  .submission-success {
+    text-align: center;
+    padding: 4rem;
+    background-color: #fff;
+    border-radius: 8px;
+  }
+  
+  .submission-success h2 {
+    color: #28a745;
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+  }
+  
+  .submission-success p {
+    font-size: 1.2rem;
+    color: #6c757d;
+  }

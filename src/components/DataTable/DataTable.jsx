@@ -1,230 +1,292 @@
-import React, { useState, useImperativeHandle, forwardRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './DataTable.css';
+import { hierarchicalColumns } from './hierarchicalColumns.js';
+import { FiMaximize, FiMinimize, FiTrash2 } from 'react-icons/fi';
+import { toast } from 'react-hot-toast';
 
-const columns = [
-  { 
-    title: 'Line No', 
-    type: 'text', 
-    hint: '',
-    counter: 'lineNo'
-  },
-  { 
-    title: 'Name of the person', 
-    hint: 'Only alphabets, digits and @#&A.()- are allowed',
-    counter: 'buildingNumber'
-  },
-  { 
-    title: 'Relationship to head',
-    hint: 'Only numbers are allowed',
-    counter: 'censusHouseNumber'
-  },
-  { 
-    title: 'Sex',
-    type: 'text', 
-    hint: 'Only numbers are allowed',
-    counter: 'floorMaterial'
-  },
-  { 
-    title: 'Date of birth and age', 
-    type: 'text', 
-    hint: 'Only numbers are allowed',
-    counter: 'wallMaterial'
-  },
-  { 
-    title: 'Current Marital Status',
-    type: 'text', 
-    hint: 'Only numbers are allowed',
-    counter: 'roofMaterial'
-  },
-  { 
-    title: 'Age at Marriage',
-    type: 'text', 
-    hint: 'Only numbers are allowed',
-    counter: 'useOfCensusHouse'
-  },
-  { 
-    title: 'Religion', 
-    type: 'text', 
-    hint: 'Only numbers are allowed',
-    counter: 'actualUseOfCensusHouse'
-  },
-  { 
-    title: 'SC/ST', 
-    type: 'text', 
-    hint: '',
-    counter: 'conditionOfCensusHouse'
-  },
-  { 
-    title: 'Mother Tongue', 
-    type: 'text', 
-    hint: '',
-    counter: 'householdNumber'
-  },
-  { 
-    title: 'Literacy Status', 
-    type: 'text', 
-    hint: '',
-    counter: 'headOfHousehold'
-  },
-  { 
-    title: 'Status of Attendance', 
-    type: 'text', 
-    hint: '',
-    counter: 'sex'
-  },
-  { 
-    title: 'Highest Educational Level Attained', 
-    type: 'text', 
-    hint: '',
-    counter: 'numberOfMembers'
-  },
-  { 
-    title: 'Worked anytime during last year', 
-    type: 'text', 
-    hint: '',
-    counter: 'caste'
-  },
-  { 
-    title: 'Category of economic activity', 
-    type: 'text', 
-    hint: '',
-    counter: 'religion'
-  },
-  { 
-    title: 'Occupation', 
-    type: 'text', 
-    hint: '',
-    counter: 'ownershipStatus'
-  },
-  { 
-    title: 'Name of industry', 
-    type: 'text', 
-    hint: '',
-    counter: 'numberOfDwellingRooms'
-  },
-  { 
-    title: 'Class of Worker', 
-    type: 'text', 
-    hint: '',
-    counter: 'sourceOfDrinkingWater'
-  },
-  { 
-    title: 'Economic Activity', 
-    type: 'text', 
-    hint: '',
-    counter: 'availabilityOfKitchen'
-  },
-  { 
-    title: 'Seeking or Avaialble for work', 
-    type: 'text', 
-    hint: '',
-    counter: 'fuelUsedForCooking'
-  },
-  { 
-    title: 'Birth Place', 
-    type: 'text', 
-    hint: '',
-    counter: 'latrineWithinPremises'
-  },
-  { 
-    title: 'Place of last attendance', 
-    type: 'text', 
-    hint: '',
-    counter: 'typeOfLatrine'
-  },
-  { 
-    title: 'Time of Migration', 
-    type: 'text', 
-    hint: '',
-    counter: 'wasteWaterOutlet'
-  },
-  { 
-    title: 'Reason', 
-    type: 'text', 
-    hint: '',
-    counter: 'bathingFacility'
-  },
-  { 
-    title: 'Duration of Stay', 
-    type: 'text', 
-    hint: '',
-    counter: 'availabilityOfRadio'
-  },
-  { 
-    title: 'Children Surviving', 
-    type: 'text', 
-    hint: '',
-    counter: 'availabilityOfTelevision'
-  },
-  { 
-    title: 'Children Ever Born', 
-    type: 'text', 
-    hint: '',
-    counter: 'accessToInternet'
-  },
-  { 
-    title: 'Children Born Alive', 
-    type: 'text', 
-    hint: '',
-    counter: 'modeOfTransport'
-  },
-  { 
-    title: 'Column 28', 
-    type: 'text', 
-    hint: '',
-    counter: '' // No corresponding counter in second table
-  },
-];
+const DataTable = () => {
+  const allFields = hierarchicalColumns.flatMap(col => col.fields);
 
-const DataTable = forwardRef(({ height }, ref) => {
-  const [data, setData] = useState(Array(10).fill({}).map(() => ({})));
+  const [data, setData] = useState(() => {
+    const initialData = Array(10).fill({}).map(() => {
+      const rowData = {};
+      allFields.forEach(field => {
+        rowData[field.id] = '';
+      });
+      return rowData;
+    });
+    return initialData;
+  });
 
-  const handleChange = (rowIndex, colTitle, value) => {
-    const newData = [...data];
-    newData[rowIndex] = { ...newData[rowIndex], [colTitle]: value };
-    setData(newData);
+  const [isFullScreen, setIsFullScreen] = useState(false);
+  const [isAutosaveEnabled, setIsAutosaveEnabled] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const autosaveIntervalRef = useRef(null);
+  const dataRef = useRef(data);
+
+  useEffect(() => {
+      dataRef.current = data;
+  }, [data]);
+
+  useEffect(() => {
+    const loadDraft = async () => {
+        try {
+            const response = await fetch('/api/get_draft');
+            if (response.ok) {
+                const draftData = await response.json();
+                if (draftData && draftData.length > 0) {
+                    setData(draftData);
+                    toast.success('Previously saved draft loaded.');
+                }
+            }
+        } catch (error) {
+            console.error('Error loading draft:', error);
+            const savedData = localStorage.getItem('censusData');
+            if (savedData) {
+              try {
+                const parsedData = JSON.parse(savedData);
+                if (Array.isArray(parsedData)) {
+                  setData(parsedData);
+                }
+              } catch (e) {
+                console.error('Error parsing census data from localStorage', e);
+              }
+            }
+        }
+    };
+
+    loadDraft();
+
+    return () => {
+      if (autosaveIntervalRef.current) {
+        clearInterval(autosaveIntervalRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (isAutosaveEnabled) {
+      autosaveIntervalRef.current = setInterval(() => {
+        saveDraft(dataRef.current);
+      }, 30000); // 30 seconds
+    } else {
+      if (autosaveIntervalRef.current) {
+        clearInterval(autosaveIntervalRef.current);
+      }
+    }
+
+    return () => {
+      if (autosaveIntervalRef.current) {
+        clearInterval(autosaveIntervalRef.current);
+      }
+    };
+  }, [isAutosaveEnabled]);
+
+  const saveDraft = async (currentData) => {
+    try {
+      const response = await fetch('/api/save_draft', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ data: currentData }),
+      });
+      if (response.ok) {
+        toast.success('Draft saved automatically!');
+        return true;
+      } else {
+        throw new Error('Failed to save draft');
+      }
+    } catch (error) {
+      console.error('Error saving draft:', error);
+      toast.error('Auto-save failed');
+      return false;
+    }
   };
 
-  useImperativeHandle(ref, () => ({
-    getData: () => {
-      return data;
-    },
-  }));
+  const handleFieldChange = (rowIndex, fieldId, value) => {
+    setData(prev => {
+      const newData = [...prev];
+      newData[rowIndex] = {
+        ...newData[rowIndex],
+        [fieldId]: value
+      };
+      return newData;
+    });
+  };
+
+  const isFieldVisible = (field, rowData) => {
+    if (!field.conditional) return true;
+    if (typeof field.conditional === 'function') {
+      return field.conditional(rowData);
+    }
+    return true;
+  };
+
+  const renderFieldType = (field, rowIndex, rowData) => {
+    const value = rowData[field.id] || '';
+    switch (field.type) {
+        case 'text':
+          return (
+            <input
+              type="text"
+              value={value}
+              onChange={(e) => handleFieldChange(rowIndex, field.id, e.target.value)}
+              placeholder={field.placeholder}
+            />
+          );
+        case 'number':
+          return (
+            <input
+              type="number"
+              value={value}
+              min={field.min}
+              max={field.max}
+              onChange={(e) => handleFieldChange(rowIndex, field.id, e.target.value)}
+            />
+          );
+        case 'select':
+          return (
+            <select
+              value={value}
+              onChange={(e) => handleFieldChange(rowIndex, field.id, e.target.value)}
+            >
+              <option value="">Select...</option>
+              {field.options.map(opt => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          );
+        case 'date':
+          return (
+            <input
+              type="date"
+              value={value}
+              onChange={(e) => handleFieldChange(rowIndex, field.id, e.target.value)}
+            />
+          );
+        default:
+          return <input type="text" value={value} onChange={(e) => handleFieldChange(rowIndex, field.id, e.target.value)} />;
+      }
+  };
+
+  const resetData = () => {
+    if (window.confirm('Are you sure you want to reset all data? This cannot be undone.')) {
+        const initialData = Array(10).fill({}).map(() => {
+            const rowData = {};
+            allFields.forEach(field => {
+              rowData[field.id] = '';
+            });
+            return rowData;
+          });
+      setData(initialData);
+      localStorage.removeItem('censusData');
+      toast.success('Data has been reset.');
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (window.confirm('Are you sure you want to submit? This action is final.')) {
+      try {
+          const response = await fetch('/api/submit', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ data: dataRef.current }),
+          });
+
+          if (response.ok) {
+              setIsSubmitted(true);
+              setIsAutosaveEnabled(false);
+              localStorage.removeItem('censusData');
+              toast.success('Data submitted successfully!');
+          } else {
+              throw new Error('Submission failed');
+          }
+      } catch (error) {
+          console.error('Submission failed:', error);
+          toast.error('Submission failed. Please try again.');
+      }
+    }
+  }
+
+  const toggleFullScreen = () => setIsFullScreen(!isFullScreen);
+  const toggleAutosave = () => setIsAutosaveEnabled(prev => !prev);
+
+  if (isSubmitted) {
+    return (
+        <div className="submission-success">
+            <h2>Thank You!</h2>
+            <p>Your data has been successfully submitted.</p>
+        </div>
+    )
+  }
+
+  const lastFieldIds = new Set(
+    hierarchicalColumns.map(col => col.fields[col.fields.length - 1].id)
+  );
 
   return (
-    <div className="data-table-container" style={{ height: `${height}px` }}>
-      <table className="data-table">
-        <thead>
-          <tr>
-            {columns.map((col, index) => (
-              <th key={index}>{col.title}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {[...Array(10)].map((_, rowIndex) => (
-            <tr key={rowIndex}>
-              {columns.map((col, colIndex) => (
-                <td key={colIndex}>
-                  {col.title === 'Line No' ? (
-                    <div className="line-no">{rowIndex + 1}</div>
-                  ) : (
-                    <div className="input-container">
-                      <input
-                        type={col.type}
-                        onChange={(e) => handleChange(rowIndex, col.title, e.target.value)}
-                      />
-                      {col.hint && <small className="hint">{col.hint}</small>}
-                    </div>
-                  )}
-                </td>
+    <div className={`datatable-container ${isFullScreen ? 'fullscreen' : ''}`}>
+      <div className="toolbar">
+        <button onClick={toggleFullScreen}>
+          {isFullScreen ? <FiMinimize /> : <FiMaximize />}
+        </button>
+        <div className='autosave-toggle'>
+            <label className="switch">
+                <input type="checkbox" checked={isAutosaveEnabled} onChange={toggleAutosave} />
+                <span className="slider round"></span>
+            </label>
+            <span className='autosave-label'>Autosave</span>
+        </div>
+        <button onClick={resetData} className="danger">
+          <FiTrash2 />
+        </button>
+      </div>
+      <div className="table-wrapper">
+      <table>
+          <thead>
+            <tr>
+              {hierarchicalColumns.map((col, index) => (
+                <th key={index} colSpan={col.fields.length}>
+                  {col.title}
+                </th>
               ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
+            <tr>
+                {allFields.map((field, index) => (
+                    <th key={index}>{field.label}</th>
+                ))}
+            </tr>
+          </thead>
+          <tbody>
+            {data.map((row, rowIndex) => (
+              <tr key={rowIndex}>
+                {allFields.map((field) => (
+                  <td 
+                    key={field.id}
+                    className={`${lastFieldIds.has(field.id) ? 'main-question-border' : ''}`}>
+                    {isFieldVisible(field, row) ? 
+                      renderFieldType(field, rowIndex, row) : 
+                      <span className="field-hidden">-</span>
+                    }
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div className='footer-toolbar'>
+        <button onClick={handleSubmit} className='submit-btn'>
+            Submit Final Data
+        </button>
+      </div>
     </div>
   );
-});
+};
 
 export default DataTable;

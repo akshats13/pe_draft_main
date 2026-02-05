@@ -1,34 +1,99 @@
 import express from 'express';
 import fs from 'fs';
+import { promises as fsPromises } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import cors from 'cors';
 
 const app = express();
 const port = 3001;
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const tempRecordsDir = path.join(__dirname, '..', 'temp_records');
-
-// Create the directory if it doesn't exist
-if (!fs.existsSync(tempRecordsDir)) {
-  fs.mkdirSync(tempRecordsDir, { recursive: true });
-}
-
+app.use(cors());
 app.use(express.json());
 
-app.post('/api/save_record', (req, res) => {
-  const { data, version } = req.body;
-  const fileName = `record_v${version}.json`;
-  const filePath = path.join(tempRecordsDir, fileName);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-  fs.writeFile(filePath, JSON.stringify(data, null, 2), (err) => {
-    if (err) {
-      console.error('Error writing file:', err);
-      return res.status(500).send({ message: 'Error saving record' });
+const projectRoot = path.join(__dirname, '..');
+const draftDir = path.join(projectRoot, 'draft');
+const canonDir = path.join(projectRoot, 'canon');
+const draftFilePath = path.join(draftDir, 'draft.json');
+
+const ensureDirs = () => {
+  try {
+    [draftDir, canonDir].forEach(dir => {
+      if (!fs.existsSync(dir)) {
+        console.log(`Creating directory: ${dir}`);
+        fs.mkdirSync(dir, { recursive: true });
+      }
+    });
+  } catch (error) {
+    console.error('Failed to create directories:', error);
+  }
+};
+
+ensureDirs();
+
+app.post('/api/save_draft', async (req, res) => {
+  console.log('Save draft called at:', new Date().toISOString());
+  try {
+    const { data } = req.body;
+    if (!data) {
+      return res.status(400).send({ message: 'No data provided' });
     }
-    res.status(200).send({ message: 'Record saved successfully' });
-  });
+    await fsPromises.writeFile(draftFilePath, JSON.stringify(data, null, 2));
+    res.status(200).send({ message: 'Draft saved successfully' });
+  } catch (err) {
+    console.error('Error saving draft:', err);
+    res.status(500).send({ message: 'Error saving draft' });
+  }
+});
+
+app.get('/api/get_draft', async (req, res) => {
+  console.log('Get draft called at:', new Date().toISOString());
+  try {
+    if (fs.existsSync(draftFilePath)) {
+      const stats = await fsPromises.stat(draftFilePath);
+      const ageInMinutes = (new Date().getTime() - new Date(stats.mtime).getTime()) / 1000 / 60;
+      if (ageInMinutes < 20) {
+        const data = await fsPromises.readFile(draftFilePath, 'utf-8');
+        res.status(200).send(JSON.parse(data));
+        return;
+      }
+    }
+    res.status(200).send([]);
+  } catch (err) {
+    console.error('Error getting draft:', err);
+    res.status(500).send({ message: 'Error getting draft' });
+  }
+});
+
+app.post('/api/submit', async (req, res) => {
+  console.log('Submit endpoint hit');
+  console.log('Request body:', req.body);
+  try {
+    const { data } = req.body;
+    if (!data || data.length === 0) {
+      console.error('No data provided in submit request or data is empty');
+      return res.status(400).send({ message: 'No data provided or data is empty' });
+    }
+
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const canonFilePath = path.join(canonDir, `record_${timestamp}.json`);
+    
+    await fsPromises.writeFile(canonFilePath, JSON.stringify(data, null, 2));
+    console.log(`Final record saved to: ${canonFilePath}`);
+
+    if (fs.existsSync(draftFilePath)) {
+      await fsPromises.unlink(draftFilePath);
+      console.log('Draft file deleted.');
+    }
+
+    res.status(200).send({ message: 'Record submitted successfully' });
+  } catch (err) {
+    console.error('Error submitting record:', err);
+    res.status(500).send({ message: 'Error submitting record', error: err.message });
+  }
 });
 
 app.listen(port, () => {

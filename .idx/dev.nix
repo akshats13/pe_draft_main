@@ -23,6 +23,9 @@
         default.openFiles = [ "src/App.tsx" "src/App.ts" "src/App.jsx" "src/App.js" ];
       };
       # To run something each time the workspace is (re)started, use the `onStart` hook
+      onStart = { 
+        npm-install-on-start = "npm i --no-audit --no-progress --timing";
+       };
     };
     # Enable previews and customize configuration
     previews = {

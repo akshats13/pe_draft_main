@@ -1,4 +1,10 @@
 /* App.css */
+
+*:focus {
+  outline: none;
+  box-shadow: none;
+}
+
 .App {
   padding: 1rem;
   max-width: 1600px;

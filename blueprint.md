@@ -1,28 +1,26 @@
-# Project Blueprint: Census Data Entry Form
+# Project Blueprint
 
 ## Overview
+This is a web application for census data collection. It features a form for location details and a data table for personal enumeration. The application is built with React and uses a Node.js server for data handling.
 
-This document outlines the plan for creating a web-based data entry form that mirrors the "Census of India 2021 Household Schedule." The application will be built using React and will feature a modern, responsive design with a horizontally scrollable data entry section.
+## Implemented Features
+*   **Location Details:** A form to enter location information (State, District, Tehsil, Town).
+*   **Personal Enumeration:** A data grid for entering detailed personal information for multiple individuals.
+*   **Draft Mode:** The application automatically saves progress and can resume from a draft.
+*   **Data Persistence:** A Node.js/Express backend saves draft and final data to the file system.
+*   **Vite Proxy:** The Vite development server is configured to proxy API requests to the backend.
+*   **Styling:** The application has a clean, modern interface with custom CSS.
 
-## Current Goal: Seventh Iteration
+## Current Plan: UI Refinements and Workflow Automation
 
-This iteration focuses on implementing a temporary data storage solution. Each time a user submits the data from the data table, the system will create a temporary file in a `temp_records` directory and save the record as a JSON file. The system will also manage file versions within a single session, creating a new file for each submission (e.g., `record_v1.json`, `record_v2.json`).
+The following changes will be implemented to streamline the user experience:
 
-## Plan
+1.  **Remove Focus Outline:** A global CSS rule (`*:focus { outline: none; }`) will be added to `src/App.css` to remove the default blue focus outline from all interactive elements, providing a cleaner look.
 
-1.  **Create a `temp_records` directory:**
-    -   This directory will store all the temporary record files.
-2.  **Create a simple Express server:**
-    -   A new file, `src/server.js`, will be created to define a simple Express server.
-    -   This server will have an endpoint, `/api/save_record`, that will receive the data from the frontend and save it to a file in the `temp_records` directory.
-3.  **Update `vite.config.js`:**
-    -   Configure Vite to proxy API requests to the Express server in development.
-4.  **Update `src/App.jsx`:**
-    -   Add a state variable to keep track of the file version.
-    -   Modify the `handleDataSubmit` function to send a POST request to the `/api/save_record` endpoint with the data from the data table.
-5.  **Update `src/components/DataTable/DataTable.jsx`:**
-    -   Use the `useImperativeHandle` hook to expose a function that returns the data from the data table.
-6.  **Update `src/App.jsx` to use a `ref`:**
-    -   Use a `ref` to access the `DataTable` component's data from the `App` component.
-7.  **Review and Refine:**
-    -   Lint the code and verify all visual and functional changes in the application preview.
+2.  **Simplify Location Details Component:**
+    *   The `LocationDetails.jsx` component will be modified to remove the sequential, hierarchical appearance of the input fields. All four location fields (State, District, Tehsil, Town) will be visible by default when the component loads.
+    *   The arrow button used to submit the location details will be removed.
+
+3.  **Automate Data Table Loading:**
+    *   The `App.jsx` component will be updated to load the `DataTable` component automatically on page load, rather than waiting for the location details to be submitted.
+    *   The `isLocationSubmitted` state and related logic (`handleLocationSubmit` function, `useEffect` hook for checking drafts) will be removed, as the data table will now always be present.
